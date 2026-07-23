@@ -1,7 +1,8 @@
 fastapi
 uvicorn
 pandas
-numpy
 scikit-learn
 joblib
 mlflow
+dvc
+prometheus-fastapi-instrumentator

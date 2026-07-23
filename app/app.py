@@ -1,25 +1,23 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from prometheus_fastapi_instrumentator import Instrumentator
 import joblib
 import pandas as pd
 
+# Load trained model
+model = joblib.load("models/model.pkl")
 
-# Load model
-
-model = joblib.load(
-    "models/model.pkl"
-)
-
-
+# Create FastAPI app
 app = FastAPI(
     title="Teacher Performance Prediction API"
 )
 
+# Enable Prometheus metrics
+Instrumentator().instrument(app).expose(app)
+
 
 # Input schema
-
 class TeacherData(BaseModel):
-
     experience: int
     student_feedback: float
     pass_percentage: float
@@ -28,16 +26,15 @@ class TeacherData(BaseModel):
     workshops: int
 
 
-
+# Home endpoint
 @app.get("/")
 def home():
-
     return {
         "message": "Teacher Performance Prediction API"
     }
 
 
-
+# Prediction endpoint
 @app.post("/predict")
 def predict(data: TeacherData):
 
@@ -60,10 +57,8 @@ def predict(data: TeacherData):
         ]
     )
 
-
     prediction = model.predict(input_data)
 
-
     return {
-        "Predicted Performance Score": round(float(prediction[0]),2)
+        "Predicted Performance Score": round(float(prediction[0]), 2)
     }
