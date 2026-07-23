@@ -1,14 +1,21 @@
 import pandas as pd
 import os
 import joblib
+import mlflow
+import mlflow.sklearn
 
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    r2_score
+)
 
 
-# ====================================
+# =====================================
 # 1. Load Processed Data
-# ====================================
+# =====================================
 
 X_train = pd.read_csv(
     "data/processed/X_train.csv"
@@ -29,122 +36,186 @@ y_test = pd.read_csv(
 )
 
 
-print("Data Loaded Successfully")
-
-
-# ====================================
-# 2. Convert Target Data
-# ====================================
-
-# Convert dataframe to series
+# Convert dataframe to array
 
 y_train = y_train.values.ravel()
 
 y_test = y_test.values.ravel()
 
 
+print("Data Loaded Successfully")
 
-# ====================================
-# 3. Create Machine Learning Model
-# ====================================
 
-model = RandomForestRegressor(
+# =====================================
+# 2. MLflow Configuration
+# =====================================
 
-    n_estimators=100,
-
-    random_state=42
-
+mlflow.set_experiment(
+    "Teacher_Performance_Prediction"
 )
 
 
+# Start MLflow Run
 
-# ====================================
-# 4. Train Model
-# ====================================
-
-print("Training Started...")
-
-model.fit(
-    X_train,
-    y_train
-)
+with mlflow.start_run():
 
 
-print("Training Completed")
+    # =================================
+    # 3. Model Parameters
+    # =================================
+
+    n_estimators = 100
+
+    random_state = 42
 
 
 
-# ====================================
-# 5. Prediction
-# ====================================
+    # Log parameters
 
-y_pred = model.predict(
-    X_test
-)
-
+    mlflow.log_param(
+        "model",
+        "Random Forest Regressor"
+    )
 
 
-# ====================================
-# 6. Model Evaluation
-# ====================================
+    mlflow.log_param(
+        "n_estimators",
+        n_estimators
+    )
 
 
-mae = mean_absolute_error(
-    y_test,
-    y_pred
-)
-
-
-mse = mean_squared_error(
-    y_test,
-    y_pred
-)
-
-
-rmse = mse ** 0.5
-
-
-r2 = r2_score(
-    y_test,
-    y_pred
-)
+    mlflow.log_param(
+        "random_state",
+        random_state
+    )
 
 
 
-print("\nModel Performance")
-print("-------------------------")
+    # =================================
+    # 4. Train Model
+    # =================================
 
-print("MAE :", mae)
+    model = RandomForestRegressor(
 
-print("RMSE :", rmse)
+        n_estimators=n_estimators,
 
-print("R2 Score :", r2)
+        random_state=random_state
 
-
-
-# ====================================
-# 7. Save Model
-# ====================================
+    )
 
 
-os.makedirs(
-    "models",
-    exist_ok=True
-)
+    model.fit(
+        X_train,
+        y_train
+    )
 
 
-model_path = "models/model.pkl"
+    print("Model Training Completed")
 
 
-joblib.dump(
-    model,
-    model_path
-)
+
+    # =================================
+    # 5. Prediction
+    # =================================
+
+    y_pred = model.predict(
+        X_test
+    )
 
 
-print("\nModel Saved Successfully")
 
-print(
-    "Location:",
-    model_path
-)
+    # =================================
+    # 6. Evaluation Metrics
+    # =================================
+
+
+    mae = mean_absolute_error(
+        y_test,
+        y_pred
+    )
+
+
+    mse = mean_squared_error(
+        y_test,
+        y_pred
+    )
+
+
+    rmse = mse ** 0.5
+
+
+    r2 = r2_score(
+        y_test,
+        y_pred
+    )
+
+
+
+    print("-------------------------")
+    print("MAE :", mae)
+    print("RMSE :", rmse)
+    print("R2 Score :", r2)
+
+
+
+    # =================================
+    # 7. Log Metrics in MLflow
+    # =================================
+
+
+    mlflow.log_metric(
+        "MAE",
+        mae
+    )
+
+
+    mlflow.log_metric(
+        "RMSE",
+        rmse
+    )
+
+
+    mlflow.log_metric(
+        "R2_score",
+        r2
+    )
+
+
+
+    # =================================
+    # 8. Save Model
+    # =================================
+
+
+    os.makedirs(
+        "models",
+        exist_ok=True
+    )
+
+
+    model_path = "models/model.pkl"
+
+
+
+    joblib.dump(
+        model,
+        model_path
+    )
+
+
+    print("Model Saved")
+
+
+
+    # =================================
+    # 9. Log Model to MLflow
+    # =================================
+
+
+    mlflow.sklearn.log_model(
+        model,
+        "teacher_model"
+    )
+
+
+print("MLflow Run Completed")

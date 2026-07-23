@@ -1,0 +1,5 @@
+outs:
+- md5: 20243a372296f44db71b4af92eae05c4
+  size: 355
+  hash: md5
+  path: teacher_data.csv
