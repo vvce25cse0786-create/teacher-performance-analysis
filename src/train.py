@@ -36,7 +36,18 @@ y_test = pd.read_csv(
 )
 
 
-# Convert dataframe to array
+# =====================================
+# Remove Teacher_ID if present
+# =====================================
+
+if "Teacher_ID" in X_train.columns:
+    X_train = X_train.drop("Teacher_ID", axis=1)
+
+if "Teacher_ID" in X_test.columns:
+    X_test = X_test.drop("Teacher_ID", axis=1)
+
+
+# Convert target dataframe to array
 
 y_train = y_train.values.ravel()
 
@@ -44,6 +55,10 @@ y_test = y_test.values.ravel()
 
 
 print("Data Loaded Successfully")
+
+print("Training Features:")
+print(X_train.columns)
+
 
 
 # =====================================
@@ -54,8 +69,6 @@ mlflow.set_experiment(
     "Teacher_Performance_Prediction"
 )
 
-
-# Start MLflow Run
 
 with mlflow.start_run():
 
@@ -68,9 +81,6 @@ with mlflow.start_run():
 
     random_state = 42
 
-
-
-    # Log parameters
 
     mlflow.log_param(
         "model",
@@ -90,10 +100,10 @@ with mlflow.start_run():
     )
 
 
-
     # =================================
     # 4. Train Model
     # =================================
+
 
     model = RandomForestRegressor(
 
@@ -118,6 +128,7 @@ with mlflow.start_run():
     # 5. Prediction
     # =================================
 
+
     y_pred = model.predict(
         X_test
     )
@@ -125,7 +136,7 @@ with mlflow.start_run():
 
 
     # =================================
-    # 6. Evaluation Metrics
+    # 6. Evaluation
     # =================================
 
 
@@ -159,7 +170,7 @@ with mlflow.start_run():
 
 
     # =================================
-    # 7. Log Metrics in MLflow
+    # 7. MLflow Metrics
     # =================================
 
 
@@ -193,13 +204,9 @@ with mlflow.start_run():
     )
 
 
-    model_path = "models/model.pkl"
-
-
-
     joblib.dump(
         model,
-        model_path
+        "models/model.pkl"
     )
 
 
@@ -208,7 +215,7 @@ with mlflow.start_run():
 
 
     # =================================
-    # 9. Log Model to MLflow
+    # 9. Save MLflow Model
     # =================================
 
 
@@ -216,6 +223,7 @@ with mlflow.start_run():
         model,
         "teacher_model"
     )
+
 
 
 print("MLflow Run Completed")
